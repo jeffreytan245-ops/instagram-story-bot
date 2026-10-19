@@ -29,7 +29,7 @@ jobs:
       POST_HOUR: "13"                 # <- local hour to post
       POST_WINDOW_HOURS: "2"          # late runs may still post until 15:00
       MEDIA_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}
-      TOKEN_OUT_FILE: ${{ runner.temp }}/new_token.txt
+      TOKEN_OUT_FILE: /tmp/ig_new_token.txt
 
     steps:
       - name: Check out repo
