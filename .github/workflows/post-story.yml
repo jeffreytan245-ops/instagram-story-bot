@@ -11,6 +11,10 @@ on:
         description: "Post right now, ignoring the time window and once-per-day guard"
         type: boolean
         default: false
+      check_pat:
+        description: "Only verify that the GH_PAT secret can manage repo secrets (no post)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write   # to commit state.json back to the repo
@@ -40,10 +44,21 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Check GH_PAT can manage secrets
+        if: inputs.check_pat
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "::error::GH_PAT secret is not set"; exit 1; fi
+          gh api "repos/$GITHUB_REPOSITORY/actions/secrets/public-key" --jq '.key_id' > /dev/null
+          echo "GH_PAT OK: it can read/write this repo's Actions secrets."
+
       - name: Install timezone data
+        if: ${{ !inputs.check_pat }}
         run: python -m pip install -q tzdata
 
       - name: Post story
+        if: ${{ !inputs.check_pat }}
         run: python post_story.py ${{ inputs.force && '--force' || '' }}
 
       - name: Save progress (state.json)
