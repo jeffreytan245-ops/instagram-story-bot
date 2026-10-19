@@ -1,6 +1,6 @@
 {
-  "mode": "sequential",
+  "mode": "loop",
   "items": [
-    { "file": "media/Test.mp4" }
+    { "file": "media/opening-hours.mp4" }
   ]
 }
