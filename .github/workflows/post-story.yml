@@ -1,0 +1,76 @@
+name: Daily Instagram Story
+
+on:
+  schedule:
+    # Runs every hour (UTC). The script itself posts only once per day,
+    # during POST_HOUR in TIMEZONE, so DST and timezones are handled in code.
+    - cron: "7 * * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Post right now, ignoring the time window and once-per-day guard"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # to commit state.json back to the repo
+
+concurrency:
+  group: post-story
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    env:
+      IG_USER_ID: ${{ secrets.IG_USER_ID }}
+      IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+      TIMEZONE: Asia/Bangkok          # <- change to your IANA timezone
+      POST_HOUR: "13"                 # <- local hour to post
+      POST_WINDOW_HOURS: "2"          # late runs may still post until 15:00
+      MEDIA_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}
+      TOKEN_OUT_FILE: ${{ runner.temp }}/new_token.txt
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install timezone data
+        run: python -m pip install -q tzdata
+
+      - name: Post story
+        run: python post_story.py ${{ inputs.force && '--force' || '' }}
+
+      - name: Save progress (state.json)
+        if: always()
+        run: |
+          git config user.name "story-bot"
+          git config user.email "story-bot@users.noreply.github.com"
+          git add state.json
+          if git diff --cached --quiet; then
+            echo "No state change."
+          else
+            git commit -m "chore: update story state [skip ci]"
+            git push
+          fi
+
+      - name: Store refreshed access token as repo secret
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          if [ ! -s "$TOKEN_OUT_FILE" ]; then
+            echo "Token not refreshed this run."
+            exit 0
+          fi
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::Token was refreshed but GH_PAT secret is missing, so it could not be saved. Add GH_PAT (see README) or paste a new IG_ACCESS_TOKEN manually before it expires."
+            exit 0
+          fi
+          gh secret set IG_ACCESS_TOKEN --repo "$GITHUB_REPOSITORY" < "$TOKEN_OUT_FILE"
+          echo "IG_ACCESS_TOKEN secret updated."

@@ -1,0 +1,9 @@
+{
+  "mode": "sequential",
+  "items": [
+    { "file": "media/2026-10-21.jpg" },
+    { "file": "media/2026-10-22.jpg" },
+    { "file": "media/2026-10-23.mp4" },
+    { "type": "image", "url": "https://example.com/stories/hosted-elsewhere.jpg" }
+  ]
+}
