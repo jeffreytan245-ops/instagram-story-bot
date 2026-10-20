@@ -2,13 +2,13 @@ name: Daily Instagram Story
 
 on:
   schedule:
-    # GitHub delays or drops scheduled runs under load (observed gaps of ~5 h),
-    # so we fire many triggers around the target time and let the script decide.
-    # The script posts once per day, inside POST_HOUR..POST_HOUR+POST_WINDOW_HOURS
-    # in TIMEZONE. Cron below is UTC: 06:00 UTC = 13:00 Asia/Bangkok.
-    - cron: "1,11,21,31,41,51 6 * * *"   # every 10 min, 13:00-13:59 Jakarta
-    - cron: "3,23,43 7,8 * * *"          # every 20 min, 14:00-15:59 Jakarta
-    - cron: "17 9,10,11,12 * * *"        # hourly fallback until 19:59 Jakarta
+    # FALLBACK ONLY. GitHub delays or drops scheduled runs under load (observed
+    # gaps of ~5 h). The primary trigger is an external scheduler (cron-job.org)
+    # that calls workflow_dispatch at 13:00 Asia/Bangkok; see README.
+    # The script posts once per day and only inside POST_HOUR..+POST_WINDOW_HOURS
+    # in TIMEZONE, so a late trigger can never post outside the window.
+    # Cron below is UTC: 06:00 UTC = 13:00 Asia/Bangkok.
+    - cron: "2,12,22,32,42 6 * * *"      # 13:02-13:42 Jakarta
   workflow_dispatch:
     inputs:
       force:
@@ -35,7 +35,7 @@ jobs:
       IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
       TIMEZONE: Asia/Bangkok          # <- change to your IANA timezone
       POST_HOUR: "13"                 # <- local hour to post
-      POST_WINDOW_HOURS: "7"          # late runs may still post until 19:59
+      POST_WINDOW_HOURS: "1"          # hard window: 13:00-13:59 only
       MEDIA_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.ref_name }}
       TOKEN_OUT_FILE: /tmp/ig_new_token.txt
 
