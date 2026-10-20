@@ -5,7 +5,7 @@ Posts one Instagram Story every day at 13:00, fully in the cloud on GitHub Actio
 ## How it works
 
 - Your story images/videos live in the `media/` folder of a public GitHub repo.
-- A GitHub Actions cron runs `post_story.py` every hour. The script posts only once per day, inside the 13:00–15:00 window in your timezone (the extra hours cover GitHub cron delays and retries).
+- GitHub Actions cron triggers run `post_story.py` many times around 13:00 (every 10 min from 13:00, then less often until 19:59 in your timezone). The script posts only once per day, at the first run inside that window. GitHub delays or drops scheduled runs under load, which is why there are so many triggers and a wide window.
 - After posting, the workflow commits `state.json` back so the next day picks the next item.
 - The 60-day access token is refreshed automatically after 45 days.
 
@@ -107,9 +107,10 @@ and `install_task.ps1` registers a Windows Task Scheduler job at 13:00 (requires
 
 ## Troubleshooting
 
-- **"outside the 13:00-15:00 window"**: expected on 22 of the 24 hourly runs. Use Run workflow → force to post now.
+- **"outside the 13:00-20:00 window"**: expected for any run outside the window. Use Run workflow → force to post now.
 - **"Already posted today"**: expected on the second run inside the window.
 - **HTTP 400 image format / media unsupported**: use JPEG, 9:16; open the raw link in an incognito window to confirm it downloads the file.
 - **OAuthException / code 190**: token expired or revoked. Generate a new one (step 1.5) and update the `IG_ACCESS_TOKEN` secret.
 - **Workflow stopped running**: GitHub pauses scheduled workflows in repos with no activity for 60 days. Daily `state.json` commits keep it active; if the queue is exhausted for 60+ days, re-enable it under Actions.
-- GitHub cron can run several minutes late at busy times; the 2-hour window absorbs that.
+- GitHub cron is not exact: runs can be minutes to hours late, and some triggers are dropped. The dense triggers plus the 7-hour window mean the story usually goes out within the first hour after 13:00, but exact-minute timing is not guaranteed. If that matters, trigger the workflow from an external scheduler (see below).
+- **Exact timing**: an external cron service (e.g. cron-job.org or a Cloudflare Worker) can call GitHub's workflow-dispatch API at 13:00 sharp. It needs a token with Actions: write; ask for help setting it up if needed.
