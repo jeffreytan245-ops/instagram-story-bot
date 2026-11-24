@@ -210,8 +210,14 @@
       "index": 0,
       "url": "https://raw.githubusercontent.com/jeffreytan245-ops/instagram-story-bot/main/media/opening-hours.mp4",
       "media_id": "18134866021806726"
+    },
+    {
+      "date": "2026-11-24",
+      "index": 0,
+      "url": "https://raw.githubusercontent.com/jeffreytan245-ops/instagram-story-bot/main/media/opening-hours.mp4",
+      "media_id": "18122378986767567"
     }
   ],
   "token_refreshed_at": "2026-10-19T19:11:10.566961+00:00",
-  "last_posted_date": "2026-11-23"
+  "last_posted_date": "2026-11-24"
 }
